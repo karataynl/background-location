@@ -49,6 +49,10 @@
 - (void) addGeofences:(CDVInvokedUrlCommand *)command;
 - (void) removeGeofence:(CDVInvokedUrlCommand *)command;
 
+- (void) requestPermission:(CDVInvokedUrlCommand *) command;
+- (void) getProviderState:(CDVInvokedUrlCommand *) command;
+- (void) requestTemporaryFullAccuracy:(CDVInvokedUrlCommand *) command;
+
 - (void) getGeofences:(CDVInvokedUrlCommand *)command;
 - (void) getGeofence:(CDVInvokedUrlCommand *)command;
 - (void) geofenceExists:(CDVInvokedUrlCommand *)command;
@@ -57,6 +61,7 @@
 - (void) stopWatchPosition:(CDVInvokedUrlCommand *)command;
 - (void) clearDatabase:(CDVInvokedUrlCommand *) command;
 - (void) destroyLocations:(CDVInvokedUrlCommand *) command;
+- (void) destroyLocation:(CDVInvokedUrlCommand *) command;
 - (void) insertLocation:(CDVInvokedUrlCommand *) command;
 - (void) getCount:(CDVInvokedUrlCommand *) command;
 - (void) getLog:(CDVInvokedUrlCommand *) command;

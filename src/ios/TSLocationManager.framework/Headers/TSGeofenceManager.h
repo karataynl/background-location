@@ -12,7 +12,6 @@
 #import "TSGeofencesChangeEvent.h"
 
 extern NSString *const STATIONARY_REGION_IDENTIFIER;
-extern NSString *const PROVISIONAL_ALWAYS_REGION_IDENTIFIER;
 
 @interface TSGeofenceManager : NSObject<CLLocationManagerDelegate>
 {
@@ -40,6 +39,7 @@ extern NSString *const PROVISIONAL_ALWAYS_REGION_IDENTIFIER;
 -(void) removeListeners;
 -(void) start;
 -(void) stop;
+-(void) ready;
 -(void) setLocation:(CLLocation*)location isMoving:(BOOL)isMoving;
 -(void) setProximityRadius:(CLLocationDistance)radius;
 -(BOOL) isMonitoringRegion:(CLCircularRegion*)region;

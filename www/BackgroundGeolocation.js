@@ -56,6 +56,9 @@ module.exports = {
     PERSIST_MODE_GEOFENCE: -1,
     PERSIST_MODE_NONE: 0,
 
+    ACCURACY_AUTHORIZATION_FULL: 0,
+    ACCURACY_AUTHORIZATION_REDUCED: 1,
+
     deviceSettings: DeviceSettings,
 
     logger: Logger,
@@ -92,6 +95,9 @@ module.exports = {
         } else {
             API.requestPermission().then(success).catch(failure);
         }
+    },
+    requestTemporaryFullAccuracy: function(purpose) {
+        return API.requestTemporaryFullAccuracy(purpose);
     },
     getProviderState: function(success, failure) {
         if (!arguments.length) {
@@ -276,6 +282,9 @@ module.exports = {
         } else {
             API.destroyLocations().then(success).catch(failure);
         }
+    },
+    destroyLocation: function(uuid) {
+        return API.destroyLocation(uuid);
     },
     // @deprecated
     clearDatabase: function() {
@@ -486,11 +495,11 @@ module.exports = {
     * Register a device with tracker.transistorsoft.com.  The server returns an authorization token (JWT)
     * This behaviour is specific to the Demo app.
     */
-    findOrCreateTransistorAuthorizationToken(orgname, username, url) {
+    findOrCreateTransistorAuthorizationToken: function(orgname, username, url) {
         return TransistorAuthorizationToken.findOrCreate(orgname, username, url);
     },
 
-    destroyTransistorAuthorizationToken(url) {
+    destroyTransistorAuthorizationToken: function(url) {
         return TransistorAuthorizationToken.destroy(url);
     },
 

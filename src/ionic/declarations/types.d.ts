@@ -65,6 +65,14 @@ declare module "cordova-background-geolocation-lt" {
 	type AuthorizationStatus = 0 | 1 | 2 | 3 | 4;
 
 	/**
+	* | Name                                    | Value     |
+	* |-----------------------------------------|-----------|
+	* | [[ACCURACY_AUTHORIZATION_FULL]] 		| 0     	|
+	* | [[ACCURACY_AUTHORIZATION_REDUCED]]     	| 1         |
+	*/
+	type AccuracyAuthorization = 0 | 1;
+
+	/**
 	* | Value    | Description                                                           |
 	* |----------|-----------------------------------------------------------------------|
 	* | `0`      | Geofences-only monitoring ([[BackgroundGeolocation.startGeofences]]). |
@@ -83,7 +91,7 @@ declare module "cordova-background-geolocation-lt" {
     * | 408   | Location timeout            |
     * | 499   | Location request cancelled  |
 	*/
-	type LocationError = 0 | 1 | 2 | 408;
+	type LocationError = 0 | 1 | 2 | 408 | 499;
 
 	/**
 	* iOS Location authorization request.

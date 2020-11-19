@@ -178,6 +178,13 @@ module.exports = {
             exec(success, failure, MODULE_NAME, 'requestPermission', []);
         });
     },
+    requestTemporaryFullAccuracy: function(purpose) {
+        return new Promise(function(resolve, reject) {
+            var success = function(accuracyAuthorization) { resolve(accuracyAuthorization) }
+            var failure = function(error) { reject(error) }
+            exec(success, failure, MODULE_NAME, 'requestTemporaryFullAccuracy', [purpose]);
+        })
+    },
     getProviderState: function(success, failure) {
         return new Promise(function(resolve, reject) {
             var success = function(state) { resolve(state) }
@@ -434,6 +441,13 @@ module.exports = {
             var success = function() { resolve(); }
             var failure = function(error) { reject(error) }
             exec(success, failure, MODULE_NAME, 'destroyLocations', []);
+        });
+    },
+    destroyLocation: function(uuid) {
+        return new Promise(function(resolve, reject) {
+            var success = function() { resolve(); }
+            var failure = function(error) { reject(error) }
+            exec(success, failure, MODULE_NAME, 'destroyLocation', [uuid]);
         });
     },
     insertLocation: function(location) {

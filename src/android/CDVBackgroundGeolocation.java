@@ -85,6 +85,7 @@ public class CDVBackgroundGeolocation extends CordovaPlugin {
     public static final String ACTION_ADD_POWERSAVECHANGE_LISTENER = "addPowerSaveChangeListener";
     public static final String ACTION_ADD_NOTIFICATIONACTION_LISTENER = "addNotificationActionListener";
     public static final String ACTION_ADD_AUTHORIZATION_LISTENER = "addAuthorizationListener";
+    public static final String ACTION_REQUEST_TEMPORARY_FULL_ACCURACY = "requestTemporaryFullAccuracy";
 
     public static final String ACTION_PLAY_SOUND        = "playSound";
     public static final String ACTION_GET_STATE         = "getState";
@@ -111,7 +112,6 @@ public class CDVBackgroundGeolocation extends CordovaPlugin {
 
     private void initializeLocationManager() {
         Activity activity   = cordova.getActivity();
-        Intent launchIntent = activity.getIntent();
 
         TSConfig config = TSConfig.getInstance(activity.getApplicationContext());
         config.useCLLocationAccuracy(true);
@@ -120,10 +120,10 @@ public class CDVBackgroundGeolocation extends CordovaPlugin {
             .setHeadlessJobService(getClass().getPackage().getName() + "." + HEADLESS_JOB_SERVICE_CLASS)
             .commit();
 
-        if (launchIntent.hasExtra("forceReload")) {
-            activity.moveTaskToBack(true);
-        }
-        getAdapter().onPlayServicesConnectError((new TSPlayServicesConnectErrorCallback() {
+        BackgroundGeolocation adapter = getAdapter();
+        adapter.setActivity(activity);
+
+        adapter.onPlayServicesConnectError((new TSPlayServicesConnectErrorCallback() {
             @Override
             public void onPlayServicesConnectError(int errorCode) {
                 handlePlayServicesConnectError(errorCode);
@@ -270,6 +270,9 @@ public class CDVBackgroundGeolocation extends CordovaPlugin {
         } else if (BackgroundGeolocation.ACTION_DESTROY_LOCATIONS.equalsIgnoreCase(action)) {
             result = true;
             destroyLocations(callbackContext);
+        } else if (BackgroundGeolocation.ACTION_DESTROY_LOCATION.equalsIgnoreCase(action)) {
+            result = true;
+            destroyLocation(data.getString(0), callbackContext);
         } else if (ACTION_ADD_HTTP_LISTENER.equalsIgnoreCase(action)) {
             result = true;
             addHttpListener(callbackContext);
@@ -333,6 +336,9 @@ public class CDVBackgroundGeolocation extends CordovaPlugin {
         } else if (BackgroundGeolocation.ACTION_REQUEST_PERMISSION.equalsIgnoreCase(action)) {
             result = true;
             requestPermission(callbackContext);
+        } else if (ACTION_REQUEST_TEMPORARY_FULL_ACCURACY.equalsIgnoreCase(action)) {
+            result = true;
+            requestTemporaryFullAccuracy(data.getString(0), callbackContext);
         } else if (TransistorAuthorizationToken.ACTION_GET.equalsIgnoreCase(action)) {
             result = true;
             getTransistorToken(data.getString(0), data.getString(1), data.getString(2), callbackContext);
@@ -973,6 +979,17 @@ public class CDVBackgroundGeolocation extends CordovaPlugin {
         });
     }
 
+    private void destroyLocation(String uuid, final CallbackContext callbackContext) {
+        getAdapter().destroyLocation(uuid, new TSCallback() {
+            @Override public void onSuccess() {
+                callbackContext.success();
+            }
+            @Override public void onFailure(String error) {
+                callbackContext.error(error);
+            }
+        });
+    }
+
     private void getLog(JSONObject params, final CallbackContext callbackContext) throws JSONException {
         TSLog.getLog(parseSQLQuery(params), new TSGetLogCallback() {
             @Override public void onSuccess(String log) {
@@ -1108,6 +1125,11 @@ public class CDVBackgroundGeolocation extends CordovaPlugin {
         });
     }
 
+    // [iOS 14+ only] -- No Android implementation.  Just return CLAccuracyAuthorizationFull (0)
+    private void requestTemporaryFullAccuracy(String purpose, CallbackContext callbackContext) {
+        callbackContext.success(LocationProviderChangeEvent.ACCURACY_AUTHORIZATION_FULL);
+    }
+
     private void getTransistorToken(String orgname, String username, String url, final CallbackContext callbackContext) {
         Context context = cordova.getActivity().getApplicationContext();
         TransistorAuthorizationToken.findOrCreate(context, orgname, username, url, new TransistorAuthorizationToken.Callback() {
@@ -1115,7 +1137,12 @@ public class CDVBackgroundGeolocation extends CordovaPlugin {
                 callbackContext.success(token.toJson());
             }
             @Override public void onFailure(String error) {
-                callbackContext.error(error);
+                JSONObject response = new JSONObject();
+                try {
+                    response.put("status", error);
+                    response.put("message", error);
+                    callbackContext.error(response);
+                } catch (JSONException e) {}
             }
         });
     }

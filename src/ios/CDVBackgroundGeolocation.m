@@ -41,22 +41,28 @@
 
 - (void) ready:(CDVInvokedUrlCommand*) command
 {
+    NSDictionary *params = [command.arguments objectAtIndex:0];
+    BOOL reset = (params[@"reset"]) ? [params[@"reset"] boolValue] : YES;
+
     if (ready) {
         TSLocationManager *bgGeo = [TSLocationManager sharedInstance];
-        [bgGeo log:@"warn" message:@"#ready already called.  Redirecting to #setConfig"];
-        [self setConfig:command];
+        if (reset) {
+            [bgGeo log:@"warn" message:@"#ready already called.  Redirecting to #setConfig"];
+            [self setConfig:command];
+        } else {
+            [bgGeo log:@"warn" message:@"#ready already called.  Ignored"];
+        }
         return;
     }
 
     ready = YES;
     TSConfig *config = [TSConfig sharedInstance];
-    NSDictionary *params = [command.arguments objectAtIndex:0];
+
     if (config.isFirstBoot) {
         [config updateWithDictionary:params];
     } else {
-        BOOL reset = (params[@"reset"]) ? [params[@"reset"] boolValue] : YES;
         if (reset) {
-            [config reset];
+            [config reset:YES];
             [config updateWithDictionary:params];
         } else if ([params objectForKey:@"authorization"]) {
             [config updateWithBlock:^(TSConfigBuilder *builder) {
@@ -73,10 +79,12 @@
 - (void) reset:(CDVInvokedUrlCommand*) command
 {
     TSConfig *config = [TSConfig sharedInstance];
-    [config reset];
     if ([command.arguments count]) {
         NSDictionary *params = [command.arguments objectAtIndex:0];
+        [config reset:YES];
         [config updateWithDictionary:params];
+    } else {
+        [config reset];
     }
 
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:[config toDictionary]];
@@ -235,6 +243,21 @@
     __typeof(self.commandDelegate) __weak commandDelegate = self.commandDelegate;
     TSLocationManager *bgGeo = [TSLocationManager sharedInstance];
     [bgGeo destroyLocations:^{
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    } failure:^(NSString* error) {
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:error];
+        [commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }];
+}
+
+- (void) destroyLocation:(CDVInvokedUrlCommand*)command
+{
+    NSString *uuid  = [command.arguments objectAtIndex:0];
+    __typeof(self.commandDelegate) __weak commandDelegate = self.commandDelegate;
+    TSLocationManager *bgGeo = [TSLocationManager sharedInstance];
+
+    [bgGeo destroyLocation:uuid success:^{
         CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         [commandDelegate sendPluginResult:result callbackId:command.callbackId];
     } failure:^(NSString* error) {
@@ -962,7 +985,19 @@
     }];
 }
 
--(void) registerCallback:(NSString*)callbackId callback:(void(^)(id))callback
+- (void) requestTemporaryFullAccuracy:(CDVInvokedUrlCommand *) command {
+    NSString *purpose = [command.arguments objectAtIndex:0];
+    TSLocationManager *bgGeo = [TSLocationManager sharedInstance];
+    [bgGeo requestTemporaryFullAccuracy:purpose success:^(NSInteger accuracyAuthorization) {
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:accuracyAuthorization];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    } failure:^(NSError *error) {
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.userInfo[@"NSDebugDescription"]];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }];
+}
+
+- (void) registerCallback:(NSString*)callbackId callback:(void(^)(id))callback
 {
     @synchronized (callbacks) {
         [callbacks setObject:callback forKey:callbackId];
